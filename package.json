@@ -24,5 +24,10 @@
     "@babel/polyfill": "^7.4.3",
     "@babel/runtime": "^7.4.3",
     "lodash": "^4.17.11"
-  }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 version",
+    "not ie <= 8"
+  ]
 }

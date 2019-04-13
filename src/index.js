@@ -1,21 +1,13 @@
-import _ from 'lodash';
+import '@babel/polyfill'
 
-import sum from './vendor/sum.js';
-console.log('sum(1, 2) = ', sum(1, 2));
+// 测试 ES6 语法是否通过 babel 转译
+const array = [1, 2, 3]
+const isES6 = () => console.log(...array)
 
-var minus = require('./vendor/minus.js');
-console.log('minus(1, 2) = ', minus(1, 2));
+isES6()
 
-import multi from './vendor/multi.js';
-console.log('multi(1, 2) = ', multi(1, 2));
+const arr = [new Promise(() => {}), new Promise(() => {})]
 
-function component() {
-  var element = document.createElement('div');
-
-  // Lodash, now imported by script.
-  element.innerHTML = _.join(['Hello', 'webpack'], ' ');
-
-  return element;
-}
-
-document.body.appendChild(component());
+arr.map(item => {
+  console.log(item)
+})

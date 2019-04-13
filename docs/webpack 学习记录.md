@@ -147,6 +147,31 @@ module: {
 
 ```
 
+#### (三) 了解 .browserslistrc 配置文件
+
+根目录下存在.browerslistrc配置文件（内容如下）：
+
+```
+# 注释是这样写的，以#号开头
+last 2 version
+> 1%
+maintained node versions
+not  ie <= 8
+```
+
+当您将以下内容添加到 package.json 时，所有工具都会自动找到目标浏览器：
+
+``` 
+"browserslist": [
+  "> 1%",
+  "last 2 version",
+  "not ie <= 8"
+]
+```
+
+
+
+
 
 
 
