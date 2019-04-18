@@ -169,9 +169,82 @@ not  ie <= 8
 ]
 ```
 
+## 五、Code Splitting （代码分割）
 
+在 webpack4 之前是使用 commonsChunkPlugin 来拆分公共代码，v4 之后被废弃，并使用 splitChunksPlugins
+在使用 splitChunksPlugins 之前，首先要知道 splitChunksPlugins 是 webpack 主模块中的一个细分模块，无需 npm 引入
 
+简单配置 webpack.config.js 文件如下：
 
+```
+const path = require('path')
+
+const CleanWebpackPlugin = require('clean-webpack-plugin')
+
+module.exports = {
+  entry: {
+    main: './src/index.js'
+  },
+  output: {
+    publicPath: __dirname + '/dist/', // js 引用的路径或者 CDN 地址
+    path: path.resolve(__dirname, 'dist'), // 打包文件的输出目录
+    filename: '[name].bundle.js', // 代码打包后的文件名
+    chunkFilename: '[name].js' // 代码拆分后的文件名
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'all'
+    }
+  },
+  plugins: [new CleanWebpackPlugin()]
+}
+```
+
+上面高亮的代码段就是告诉 webpack，要做代码分割了，这里的 chunks: 'all' 是分割所有代码，包括同步代码和异步代码，webpack 默认是 chunks: 'async' 分割异步代码。
+
+webpack 官网默认配置：
+
+```
+optimization: {
+    splitChunks: {
+      chunks: 'async',
+      minSize: 30000,
+      maxSize: 0,
+      minChunks: 1,
+      maxAsyncRequests: 5,
+      maxInitialRequests: 3,
+      automaticNameDelimiter: '~',
+      name: true,
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        }
+      }
+    }
+  }
+```
+
+常用的配置项再下面的表格中，更多配置看[文档（中文）](https://webpack.docschina.org/plugins/split-chunks-plugin/)
+
+|配置项|说明|示例|
+|:-----|:----:|:----|
+|chunks|匹配的块的类型|initial（初始块），async（按需加载的异步块），all（所有块）|
+|name|用以控制分离后代码块的命名|chunk-libs|
+|test|用于规定缓存组匹配的文件位置|```/[\/]node_modules[\/]/```|
+|priority|分离规则的优先级，优先级越高，则优先匹配|priority: 20|
+|minSize|超过多少大小就进行压缩|minSize: 30000 默认值是 30kb|
+|minChunks|分割前必须共享模块的最小块数|minChunks: 2|
+|reuseExistingChunk|如果当前块已从主模块拆分出来，则将重用它而不是生成新的块|true|
+
+代码分割和后面的 Lazy Loading、Prefetching 有很大关系，对于首次加载速度很重要。
+
+## 六、Lazy Loading、Prefetching
 
 
 
