@@ -246,6 +246,37 @@ optimization: {
 
 ## 六、Lazy Loading、Prefetching
 
+```
+document.addEventListener('click', function() {
+  import(/* webpackChunkName: 'use-lodash'*/ 'lodash').then(function(_) {
+    console.log(_.join(['3', '4']))
+  })
+})
+```
+第一次进入页面的时候，并没有加载 lodash 和 use-lodash，当我点击网页的时候，浏览器再去加载，并且控制台输出内容，这就是代码懒加载，如果有用过 vue-router 的朋友应该会知道路由懒加载，并且官方也推荐使用懒加载的写法，就是为了结合 webpack，是 vue-cli3 生成的项目也是使用这种写法
+
+```
+component: () =>
+	import(/* webpackChunkName: 'about' */ './view/About.vue')
+```
+懒加载能加快网页的加载速度，如果你把详情页、弹窗等页面全部打包到一个 js 文件中，用户如果只是访问首页，只需要首页的代码，不需要其他页面的代码，加入多余的代码只会使加载时间变长，所以我们可以对路由进行懒加载，只有当用户访问到对应路由的时候，再去加载对应模块
+
+> 懒加载并不是 webpack 里的概念，而是 ES6 中的 import 语法，webpack 只是能够识别 import 语法，能进行代码分割而已。
+import 后面返回的是一个 then，说明这是一个 promise 类型，一些低端的浏览器不支持 promise，比如 IE ，如果要使用这种异步的代码，就要使用 babel 以及 babel-polyfill 来做转换
+
+
+```webpackPrefetch: true``` 会等你主要的 JS 都加载完了之后，网络带宽空闲的时候，它就会预先帮你加载好
+
+```
+document.addEventListener('click', () => {
+  import(/* webpackPrefetch: true */ './click.js').then(({ default: func }) => {
+    func()
+  })
+})
+```
+这章和上一章息息相关，难点重点，对前端性能优化特别高。
+
+## 七、自动生成 HTML 文件
 
 
 
