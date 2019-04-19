@@ -278,6 +278,46 @@ document.addEventListener('click', () => {
 
 ## 七、自动生成 HTML 文件
 
+使用 ***HtmlWebpackPlugin***  自动生成 HTML 文件，并自动引入打包后的 js 文件
+
+1. (一) 安装依赖
+
+```
+npm i html-webpack-plugin html-loader --save-dev
+```
+
+2. (二) 更改配置文件
+
+```
+module.exports = {
+  plugins: [
+    new HtmlWebpackPlugin({
+      // 打包输出HTML
+      title: '自动生成 HTML',
+      minify: {
+        // 压缩 HTML 文件
+        removeComments: true, // 移除 HTML 中的注释
+        collapseWhitespace: true, // 删除空白符与换行符
+        minifyCSS: true // 压缩内联 css
+      },
+      filename: 'index.html', // 生成后的文件名
+      template: 'index.html' // 根据此模版生成 HTML 文件
+    })
+  ]
+}
+```
+
+***HtmlWebpackPlugin*** 是在 plugin 这个选项中配置的。常用参数含义如下：
+
+* title: 打包后生成 html 的 title
+* filename：打包后的 html 文件名称
+* template：模板文件（例子源码中根目录下的 index.html）
+* chunks：和 entry 配置中相匹配，支持多页面、多入口
+* minify：压缩选项
+
+由于使用了 ```title``` 选项，则需要在 ```template``` 选项对应的 html 的 title 中加入 ```<%= htmlWebpackPlugin.options.title %>```
+
+![模版html](./imgs/WX20190418-181533@2x.png)
 
 
 
