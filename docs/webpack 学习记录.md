@@ -319,24 +319,293 @@ module.exports = {
 
 ![模版html](./imgs/WX20190418-181533@2x.png)
 
+## 八、处理 CSS/stylus文件
+
+#### (一) 准备工作
+本次会使用到```css-loader```, ```style-loader```等loader。
+
+css-loader:负责解析 CSS 代码，主要是为了处理 CSS 中的依赖，例如 @import 和 url() 等引用外部文件的声明
+
+style-loader 会将 css-loader 解析的结果转变成 JS 代码，运行时动态插入 style 标签来让 CSS 代码生效。
 
 
+#### (二) 安装依赖
+
+```
+npm i css-loader style-loader --save-dev
+```
+
+更改配置文件
+
+```
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  }
+}
+
+```
+
+之前是使用 ```extract-text-webpack-plugin``` 插件，此插件与 webpack4 不太匹配，现在使用 ```mini-css-extract-plugin```
+
+目前还不支持热更新，也就是在开发环境下更改了 css，需要手动的刷新页面才会看到效果，目前这个插件一般在生产环境中使用，开发环境下还是使用 'style-loader'，具体见[官网配置](https://webpack.js.org/plugins/mini-css-extract-plugin/)
+
+```
+npm i mini-css-extract-plugin --save-dev
+```
+
+更改配置文件：
+```
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
+          'css-loader'
+        ]
+      }
+    ]
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css'
+    })
+  ]
+}
+```
+
+这样只是生成了单独的 css 文件，但是并没有压缩，引入 [optimize-css-assets-webpack-plugin](https://raw.githubusercontent.com/ITxiaohao/blog-img/master/img/webpack/20190307144057.png) 插件来实现 css 压缩
+
+```
+npm install optimize-css-assets-webpack-plugin --save-dev
+```
+
+完整代码：
+```
+const path = require('path')
+
+const CleanWebpackPlugin = require('clean-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+const MiniCssExtractPlugin = require('mini-css-extract-plugin') // 将 css 单独打包成文件
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin') // 压缩 css
+
+module.exports = {
+  entry: {
+    app: './src/app.js'
+  },
+  output: {
+    publicPath: './', // js 引用的路径或者 CDN 地址
+    path: path.resolve(__dirname, 'dist'), // 打包文件的输出目录
+    filename: '[name].bundle.js', // 代码打包后的文件名
+    chunkFilename: '[name].js' // 代码拆分后的文件名
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
+          'css-loader'
+        ]
+      }
+    ]
+  },
+  plugins: [
+    new CleanWebpackPlugin(),
+    new HtmlWebpackPlugin({
+      // 打包输出HTML
+      title: '自动生成 HTML',
+      minify: {
+        // 压缩 HTML 文件
+        removeComments: true, // 移除 HTML 中的注释
+        collapseWhitespace: true, // 删除空白符与换行符
+        minifyCSS: true // 压缩内联 css
+      },
+      filename: 'index.html', // 生成后的文件名
+      template: 'index.html', // 根据此模版生成 HTML 文件
+      chunks: ['app'] // entry中的 app 入口才会被打包
+    }),
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css'
+    }),
+    new OptimizeCssAssetsPlugin({
+      assetNameRegExp: /\.css$/g,
+      cssProcessor: require('cssnano'), //用于优化\最小化 CSS 的 CSS处理器，默认为 cssnano
+      cssProcessorOptions: { safe: true, discardComments: { removeAll: true } }, //传递给 cssProcessor 的选项，默认为{}
+      canPrint: true //布尔值，指示插件是否可以将消息打印到控制台，默认为 true
+    })
+  ]
+}
+```
+
+重新打包，就可以看见css被压缩。
+
+#### (三) 处理css  预处理文件（stylus 为例）
+
+安装stylus依赖：
+
+```
+npm i stylus stylus-loader --save-dev
+```
+
+在 src 文件夹下新增stylus 文件夹及 main.styl 文件
+```
+border-radius(val)
+  -webkit-border-radius: val
+  -moz-border-radius: val
+  border-radius: val
+  
+button {
+  border-radius(5px);
+}
+
+$bodyColor = #f0f
+
+body 
+  color $bodyColor
+
+.example {
+  display: grid;
+  transition: all 0.5s;
+  user-select: none;
+  background: linear-gradient(to bottom, white, black);
+}
+```
+在 app.js 中引入 main.styl 文件
+
+```
+import './css/base.css'
+
+import './stylus/main.styl'
 
 
+import(/* webpackChunkName: 'lodash'*/ 'lodash').then(function(_) {
+  console.log(_.join(['1', '2']))
+})
+```
 
+修改配置文件：
+```
+    module: {
+        rules: [{
+            test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader'
+            ]
+        }, {
+            test: /\.styl$/,
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader',
+                'postcss-loader',  // 使用 postcss.config.js 
+                'stylus-loader',  // 使用 stylus-loader 将 stylus 转为 css
+            ],
+        }]
+    }
+    ```
 
+> module.rules.use 数组中，loader 的位置。根据 webpack 规则：放在最后的 loader 首先被执行，从上往下写的话是下面先执行，从左往右写的话是右边先执行。
 
+#### (四) 为 CSS 加上浏览器前缀
 
+安装 [postcss-loader](https://github.com/postcss/postcss-loader) 和[autoprefixer](https://github.com/postcss/autoprefixer) 依赖
 
+```
+npm install postcss-loader autoprefixer --save-dev
+```
 
+有两种方式来配置 ***postcss***，第一种是直接写在 webpack.config.js 中
 
+```
+    module: {
+        rules: [{
+            test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader'
+            ]
+        }, {
+            test: /\.styl$/,
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader',
+                {
+                    loader: '',
+                    options: {
+                        plugins: [require('autoprefixer')]
+                    }
+                },
+                'stylus-loader', 
+            ],
+        }]
+    }
+ ```
 
+第二种方式，在 webpack.config.js 同级目录下，新建 postcss.config.js 配置文件
 
+```
+module.exports = {
+  plugins: [require('autoprefixer')]
+}
+```
+同时在 webpack.config.js 中
 
+```
+    module: {
+        rules: [{
+            test: /\.css$/, // 针对 .css 后缀的文件设置 loader
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader'
+            ]
+        }, {
+            test: /\.styl$/,
+            use: [{
+                    loader: MiniCssExtractPlugin.loader
+                },
+                'css-loader',
+                'postcss-loader',
+                'stylus-loader', 
+            ],
+        }]
+    }
+```
 
+#### 补充:
+在 css-loader 中使用 importLoader 属性
 
+```
+{
+	loader: 'css-loader',
+	options: {
+		importLoader: 2
+	}
+}
+```
 
-
+***importLoader: 2*** 表示：在一个 css 中引入了另一个 css，也会执行前面的 loader
 
 
 
